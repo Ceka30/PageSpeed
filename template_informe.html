@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Informe de Rendimiento</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        text-align: center;
+        background-color: white;
+        color: rgba(0, 0, 0, 0.87);
+        margin: 0;
+        padding: 0;
+      }
+      header {
+        background-color: white;
+        color: #5f6368;
+        height: 48px;
+        line-height: 48px;
+        text-align: center;
+        font-size: 1.5em;
+        font-weight: 600;
+        padding: 10px;
+        border-bottom: 2px solid #e8e8e8;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        position: fixed;
+        width: 100%;
+        top: 0;
+        left: 0;
+        z-index: 1000;
+      }
+      .title-container {
+        width: 55%;
+        margin: 120px auto 20px auto;
+        text-align: left;
+      }
+      .title-container h3 {
+        font-size: 1.8em;
+        font-weight: bold;
+        margin-bottom: 5px;
+      }
+      .title-container p {
+        font-size: 1.2em;
+        margin: 0;
+        color: #5f6368;
+      }
+      .circle-container {
+        display: flex;
+        justify-content: center;
+        margin: 20px 0;
+        padding-top: 20px;
+        padding-bottom: 40px;
+        gap: 20px;
+      }
+      .circle {
+        position: relative;
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        background: conic-gradient(
+          {% if performance < 50 %} #f44336 {% elif performance < 90 %} #ffc107
+            {% else %} #4caf50 {% endif %} {{performance}}%,
+          #e8e8e8 0
+        );
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .inner-circle {
+        position: absolute;
+        width: 80%;
+        height: 80%;
+        background-color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        color: #5f6368;
+        font-size: 1.5em;
+      }
+      .circle[data-score]:before {
+        content: attr(data-score) "%";
+        position: absolute;
+      }
+      .circle.performance {
+        background: conic-gradient(
+          {% if performance < 50 %} #f44336 {% elif performance < 90 %} #ffc107
+            {% else %} #4caf50 {% endif %} {{performance}}%,
+          #e8e8e8 0
+        );
+      }
+      .circle.accessibility {
+        background: conic-gradient(
+          {% if accessibility < 50 %} #f44336 {% elif accessibility < 90 %}
+            #ffc107 {% else %} #4caf50 {% endif %} {{accessibility}}%,
+          #e8e8e8 0
+        );
+      }
+      .circle.seo {
+        background: conic-gradient(
+          {% if seo < 50 %} #f44336 {% elif seo < 90 %} #ffc107 {% else %}
+            #4caf50 {% endif %} {{seo}}%,
+          #e8e8e8 0
+        );
+      }
+      .graphic-title {
+        font-weight: 500;
+        margin-top: 150px;
+        text-align: center;
+      }
+      .main-container {
+        background-color: white;
+        width: 55%;
+        margin: 20px auto 20px auto;
+        padding: 10px;
+        border-radius: 10px;
+        border: 1px solid #e8e8e8;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+      }
+      .metrics-grid {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+      .metric-container {
+        margin: 10px;
+        flex-basis: 30%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      .metric-title {
+        font-weight: 500;
+        margin-bottom: 5px;
+      }
+      .gauge {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        height: 60px;
+        width: 300px;
+        overflow: hidden;
+      }
+      .gauge .background {
+        position: absolute;
+        top: 90%;
+        height: 10%;
+        width: 100%;
+        background: linear-gradient(
+          to right,
+          #4caf50 33.33%,
+          #ffc107 33.33%,
+          #ffc107 66.66%,
+          #f44336 66.66%
+        );
+      }
+      .gauge .indicator {
+        position: absolute;
+        height: 40px;
+        width: 2px;
+        background-color: white;
+        bottom: 0;
+        border: 2px solid #e8e8e8;
+        z-index: 1;
+      }
+      .gauge .indicator-label {
+        position: absolute;
+        font-size: 12px;
+        font-weight: bold;
+        color: #5f6368;
+        height: 40px;
+        width: 2px;
+        z-index: 50;
+      }
+      .gauge .label {
+        position: absolute;
+        bottom: -25px;
+        font-size: 12px;
+      }
+      .label-good {
+        left: 0;
+      }
+      .label-needs-improvement {
+        left: 50%;
+        transform: translateX(-50%);
+      }
+      .label-poor {
+        right: 0;
+      }
+      .limits {
+        display: flex;
+        justify-content: space-between;
+        width: 300px;
+        margin-top: 5px;
+        font-size: 12px;
+      }
+      .limits .good {
+        color: #4caf50;
+      }
+      .limits .improvement {
+        color: #ffc107;
+      }
+      .limits .poor {
+        color: #f44336;
+      }
+      .audits-container {
+        text-align: left;
+        width: 55%;
+        margin: 20px auto;
+      }
+      .audit-item {
+        margin-bottom: 20px;
+      }
+      .audit-title {
+        font-weight: bold;
+        margin-bottom: 5px;
+      }
+      .audit-description {
+        white-space: pre-line;
+        color: #5f6368;
+        margin-left: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>PageSpeed Entel</header>
+
+    <div class="title-container">
+      <h3>Informe de Rendimiento desde {{ fecha }}</h3>
+      <p>{{ url }}</p>
+    </div>
+
+    <!-- Gráficos circulares para las métricas de rendimiento -->
+    <div class="circle-container">
+      <div class="circle performance" data-score="{{ performance }}">
+        <div class="inner-circle">{{ performance }}%</div>
+        <div class="graphic-title">Performance</div>
+      </div>
+      <div class="circle accessibility" data-score="{{ accessibility }}">
+        <div class="inner-circle">{{ accessibility }}%</div>
+        <div class="graphic-title">Accessibility</div>
+      </div>
+      <div class="circle seo" data-score="{{ seo }}">
+        <div class="inner-circle">{{ seo }}%</div>
+        <div class="graphic-title">SEO</div>
+      </div>
+    </div>
+
+    <!-- Contenedor principal -->
+    <div class="main-container">
+      <div class="metrics-grid">
+        <!-- CUMULATIVE LAYOUT SHIFT SCORE -->
+        <div class="metric-container">
+          <div class="metric-title">Cumulative Layout Shift (CLS)</div>
+          <div class="gauge">
+            <div class="background"></div>
+            <div class="indicator" style="left: {{ posicion_cls }}%;"></div>
+            <div class="indicator-label" style="left: {{ posicion_cls }}%;">
+              {{ puntaje_cls }}
+            </div>
+          </div>
+          <div class="limits">
+            <div class="good">0</div>
+            <div class="good">0.1</div>
+            <div class="improvement">0.25</div>
+            <div class="poor"></div>
+          </div>
+        </div>
+
+        <!-- EXPERIMENTAL TIME TO FIRST BYTE -->
+        <div class="metric-container">
+          <div class="metric-title">Time To First Byte (TTFB)</div>
+          <div class="gauge">
+            <div class="background"></div>
+            <div class="indicator" style="left: {{ posicion_ttfb }}%;"></div>
+            <div class="indicator-label" style="left: {{ posicion_ttfb }}%;">
+              {{ puntaje_ttfb }}s
+            </div>
+          </div>
+          <div class="limits">
+            <div class="good">0</div>
+            <div class="good">0.8s</div>
+            <div class="improvement">1.8s</div>
+            <div class="poor"></div>
+          </div>
+        </div>
+
+        <!-- FIRST CONTENTFUL PAINT MS -->
+        <div class="metric-container">
+          <div class="metric-title">First Contentful Paint (FCP)</div>
+          <div class="gauge">
+            <div class="background"></div>
+            <div class="indicator" style="left: {{ posicion_fcp }}%;"></div>
+            <div class="indicator-label" style="left: {{ posicion_fcp }}%;">
+              {{ puntaje_fcp }}s
+            </div>
+          </div>
+          <div class="limits">
+            <div class="good">0</div>
+            <div class="good">1.8s</div>
+            <div class="improvement">3.0s</div>
+            <div class="poor"></div>
+          </div>
+        </div>
+
+        <!-- INTERACTION TO NEXT PAINT -->
+        <div class="metric-container">
+          <div class="metric-title">Interaction to Next Paint (INP)</div>
+          <div class="gauge">
+            <div class="background"></div>
+            <div class="indicator" style="left: {{ posicion_inp }}%;"></div>
+            <div class="indicator-label" style="left: {{ posicion_inp }}%;">
+              {{ puntaje_inp }}ms
+            </div>
+          </div>
+          <div class="limits">
+            <div class="good">0</div>
+            <div class="good">200ms</div>
+            <div class="improvement">500ms</div>
+            <div class="poor"></div>
+          </div>
+        </div>
+
+        <!-- LARGEST CONTENTFUL PAINT MS -->
+        <div class="metric-container">
+          <div class="metric-title">Largest Contentful Paint (LCP)</div>
+          <div class="gauge">
+            <div class="background"></div>
+            <div class="indicator" style="left: {{ posicion_lcp }}%;"></div>
+            <div class="indicator-label" style="left: {{ posicion_lcp }}%;">
+              {{ puntaje_lcp }}s
+            </div>
+          </div>
+          <div class="limits">
+            <div class="good">0</div>
+            <div class="good">2.5s</div>
+            <div class="improvement">4.0s</div>
+            <div class="poor"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Contenedor de auditorías -->
+    <div class="audits-container">
+      <h2>Auditorías</h2>
+      {% for audit in auditorias %}
+      <div class="audit-item">
+        <div class="audit-title">{{ audit.title }}</div>
+        <div class="audit-description">{{ audit.description }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </body>
+</html>
